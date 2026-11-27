@@ -26,9 +26,9 @@ int main() {
     int i, k, r;
 
     FILE *f = fopen("hasil_selection.csv", "w");
-    fprintf(f, "n,waktu_us,memori_array_bytes,memori_tambahan_bytes\n");
+    fprintf(f, "n,waktu_us,memori_array_bytes,memori_tambahan_bytes,memori_kb\n");
 
-    printf("n\twaktu(us)\tmemori(byte)\n");
+    printf("n\twaktu(us)\tmemori(byte)\tmemori(KB)\n");
 
     srand(42);
     for (k = 0; k < jumlah; k++) {
@@ -52,11 +52,12 @@ int main() {
         clock_t selesai = clock();
 
         double waktu = (double)(selesai - mulai) / CLOCKS_PER_SEC * 1000000 / ulang;
-        long memori = n * sizeof(int);
+        long memori = n * sizeof(int); 
         long tambahan = 4 * sizeof(int); // i, j, min, temp
-
-        printf("%d\t%.2f\t\t%ld\n", n, waktu, memori);
-        fprintf(f, "%d,%.2f,%ld,%ld\n", n, waktu, memori, tambahan);
+        double memori_kb = memori / 1024.0;
+        
+        printf("%d\t%.2f\t\t%ld\t\t%.2f\n", n, waktu, memori, memori_kb);
+        fprintf(f, "%d,%.2f,%ld,%ld,%.2f\n", n, waktu, memori, tambahan, memori_kb);
 
         free(asli);
         free(salin);
