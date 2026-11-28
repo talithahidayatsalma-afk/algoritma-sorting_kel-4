@@ -2,67 +2,90 @@
 #include <stdlib.h>
 #include <time.h>
 
-void selectionSort(int arr[], int n) {
-    int i, j, min, temp;
+#define JUMLAH_UKURAN 5
+#define PENGULANGAN   5
 
-    for (i = 0; i < n - 1; i++) {
-        min = i;
-        for (j = i + 1; j < n; j++) {
-            if (arr[j] < arr[min]) {
-                min = j;
-            }
+/* Selection Sort */
+void selectionSort(int arr[], int n)
+{
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[minIdx])
+                minIdx = j;
         }
-        if (min != i) {
-            temp = arr[i];
-            arr[i] = arr[min];
-            arr[min] = temp;
+        if (minIdx != i) {
+            int temp = arr[i];
+            arr[i] = arr[minIdx];
+            arr[minIdx] = temp;
         }
     }
 }
 
-int main() {
-    int ukuran[] = {10, 50, 100, 500, 1000, 2000, 5000};
-    int jumlah = 7;
-    int i, k, r;
+void isiDataAcak(int arr[], int n)
+{
+    for (int i = 0; i < n; i++)
+        arr[i] = rand() % 100000;
+}
 
-    FILE *f = fopen("hasil_selection.csv", "w");
-    fprintf(f, "n,waktu_us,memori_array_bytes,memori_tambahan_bytes,memori_kb\n");
+int sudahUrut(int arr[], int n)
+{
+    for (int i = 0; i < n - 1; i++)
+        if (arr[i] > arr[i + 1]) return 0;
+    return 1;
+}
 
-    printf("n\twaktu(us)\tmemori(byte)\tmemori(KB)\n");
+int main(void)
+{
+    int ukuran[JUMLAH_UKURAN] = {100, 500, 1000, 5000, 10000};
+    FILE *csv = fopen("hasil_selection.csv", "w");
 
-    srand(42);
-    for (k = 0; k < jumlah; k++) {
-        int n = ukuran[k];
-        int *asli = malloc(n * sizeof(int));
-        int *salin = malloc(n * sizeof(int));
+    srand(42); /* seed tetap agar data sama di semua program */
 
-        for (i = 0; i < n; i++) {
-            asli[i] = rand() % 10000;
-        }
+    printf("=== SELECTION SORT ===\n");
+    printf("%-10s %-18s %-18s\n", "Ukuran", "Waktu (ms)", "Memori (byte)");
+    printf("--------------------------------------------------\n");
+    if (csv) fprintf(csv, "ukuran,waktu_ms,memori_byte\n");
 
-        // diulang biar waktunya kebaca, makin kecil n makin banyak ulangannya
-        int ulang = 200000 / n;
-        clock_t mulai = clock();
-        for (r = 0; r < ulang; r++) {
-            for (i = 0; i < n; i++) {
-                salin[i] = asli[i];
+    for (int u = 0; u < JUMLAH_UKURAN; u++) {
+        int n = ukuran[u];
+        double totalWaktu = 0.0;
+
+        for (int r = 0; r < PENGULANGAN; r++) {
+            int *arr = (int *)malloc(n * sizeof(int));
+            if (arr == NULL) {
+                printf("Alokasi memori gagal!\n");
+                return 1;
             }
-            selectionSort(salin, n);
+            isiDataAcak(arr, n);
+
+            clock_t mulai = clock();
+            selectionSort(arr, n);
+            clock_t selesai = clock();
+
+            if (!sudahUrut(arr, n))
+                printf("Peringatan: data belum terurut!\n");
+
+            totalWaktu += (double)(selesai - mulai) * 1000.0 / CLOCKS_PER_SEC;
+            free(arr);
         }
-        clock_t selesai = clock();
 
-        double waktu = (double)(selesai - mulai) / CLOCKS_PER_SEC * 1000000 / ulang;
-        long memori = n * sizeof(int); 
-        long tambahan = 4 * sizeof(int); // i, j, min, temp
-        double memori_kb = memori / 1024.0;
-        
-        printf("%d\t%.2f\t\t%ld\t\t%.2f\n", n, waktu, memori, memori_kb);
-        fprintf(f, "%d,%.2f,%ld,%ld,%.2f\n", n, waktu, memori, tambahan, memori_kb);
+        double rataWaktu = totalWaktu / PENGULANGAN;
 
-        free(asli);
-        free(salin);
+        /* Memori = array + variabel bantu (i, j, minIdx, temp) */
+        size_t memArray = n * sizeof(int);
+        size_t memBantu = 4 * sizeof(int);
+        size_t memTotal = memArray + memBantu;
+
+        printf("%-10d %-18.3f %-18zu\n", n, rataWaktu, memTotal);
+        if (csv) fprintf(csv, "%d,%.3f,%zu\n", n, rataWaktu, memTotal);
     }
 
-    fclose(f);
+    if (csv) {
+        fclose(csv);
+        printf("\nHasil disimpan di hasil_selection.csv\n");
+    }
     return 0;
 }
+
+    
